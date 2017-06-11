@@ -1,0 +1,53 @@
+.cell{
+	width: 20px;
+	height: 20px;
+	border-right: 1px solid black;
+	border-bottom: 1px solid black;
+	display: inline-block;
+	font-size: 10px;
+	background-color: #cccccc;
+	font-weight: bold;
+	text-align: center;
+	line-height:20px;
+	vertical-align: top;
+}
+
+.cell:first-child {
+	border-left: 1px solid black;
+}
+
+.row{
+	width:100%;
+}
+
+.row:first-child .cell{
+	border-top: 1px solid black;
+}
+
+li, span{
+	vertical-align: top;
+}
+
+.shown {
+	background-color: #ececec;
+}
+
+.boom {
+	background-color: red;
+}
+
+.flagged {
+	background-color: blue;
+}
+
+.color1 {
+	color: blue;
+}
+
+.color2 {
+	color: green;
+}
+
+.color3 {
+	color:red;
+}
