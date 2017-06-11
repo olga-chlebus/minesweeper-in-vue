@@ -1,4 +1,4 @@
-.cell{
+.cell {
 	width: 20px;
 	height: 20px;
 	border-right: 1px solid black;
@@ -10,21 +10,27 @@
 	text-align: center;
 	line-height:20px;
 	vertical-align: top;
+
+	-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; 
 }
 
 .cell:first-child {
 	border-left: 1px solid black;
 }
 
-.row{
-	width:100%;
+.cell:not(.shown) span {
+	display: none;
 }
 
-.row:first-child .cell{
+.row {
+	width: 100%;
+}
+
+.restart + .row .cell{
 	border-top: 1px solid black;
 }
 
-li, span{
+li, span {
 	vertical-align: top;
 }
 
@@ -49,5 +55,9 @@ li, span{
 }
 
 .color3 {
-	color:red;
+	color: red;
+}
+
+.restart {
+	cursor: pointer;
 }

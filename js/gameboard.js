@@ -3,20 +3,24 @@ define('js/gameboard', ['js/tile'], function(tile){
     components: {
       tile: tile
     },
-    data: function() {
+
+    data() {
       return {
-        board: [],
+        board: null,
         size: 10,
-        started: false,
-        finished: false,
-        bombs: []
+        started: null,
+        finished: null,
+        bombs: null
       };
     },
-    created : function(){
-      this.createNewBoard();
+
+    created(){
+      this.startNewGame();
     },
+
     methods: {
-      createNewBoard: function(){
+      createNewBoard(){
+        this.board = [];
         for(var i=0; i<this.size; i++){
           var row = [];
           for(var j=0; j<this.size; j++){
@@ -28,91 +32,85 @@ define('js/gameboard', ['js/tile'], function(tile){
               detonated: false,
               hidden: true,
               flagged: false
-              //class:'cell'
             };
             row.push(cell);
           }
           this.board.push(row);
         }
       },
-      restartGame: function(){
+
+      startNewGame(){
         this.started = false;
         this.finished = false;
         this.bombs = [];
-        for(var i=0; i<this.size; i++){
-          for(var j=0; j<this.size; j++){
-            var cell = this.board[i][j];
-            cell.hidden = true;
-            cell.detonated = false;
-            cell.bomb = false;
-            cell.flagged = false;
-            cell.value = 0;
-          }
-        }
+        this.createNewBoard();
       },
-      putBombs: function(){
-        var bombs_to_put = this.size * 2;
-        while(bombs_to_put){
+
+      putBombs(){
+        var bombsToPut = this.size * 2;
+        while(bombsToPut){
           var x = Math.floor(Math.random() * this.size);
           var y = Math.floor(Math.random() * this.size);
           if(!this.board[x][y].bomb && !this.isSafeZone(x,y)){
-            this.board[x][y].bomb = true;
-            this.bombs.push({x: x, y: y});
-            bombs_to_put--;
+            /*this.board[x][y].bomb = true;
+            this.bombs.push({x: x, y: y});*/
+            this.putBomb(x,y);
+            bombsToPut--;
           }
         }
       },
-      isSafeZone: function(x,y){
+
+      putBomb(x,y){
+        this.board[x][y].bomb = true;
+        this.board[x][y].value = 0;
+        this.bombs.push({x: x, y: y}); //temporary
+        this.getNeighbours(x,y).forEach(nbr => {
+          if(!nbr.bomb){
+            nbr.value++;
+          }
+        });
+      },
+
+      getNeighbours(x,y){
+        var nbrs = [];
+        for(var i=Math.max(0,x-1); i<=Math.min(x+1, this.size-1); i++){
+          for(var j=Math.max(0,y-1); j<=Math.min(y+1, this.size-1); j++){
+            if(i !== x || j !== y) {
+              nbrs.push(this.board[i][j]);
+            }
+          }
+        }
+        return nbrs;
+      },
+
+      isSafeZone(x,y){
         var sx = this.safeZone.x;
         var sy = this.safeZone.y;
         return ((x <= sx + 1 && x >= sx - 1) && (y <= sy + 1 && y >= sy - 1));
       },
-      calculateNumbers: function(){
-        for(var i=0; i<this.size; i++){
-          for(var j=0; j<this.size; j++){
-            var cell = this.board[i][j];
-            if(!cell.bomb){
-              var count = 0;
-              for(x=i-1; x<=i+1; x++){
-                for(y=j-1; y<=j+1; y++){
-                  if(x >=0 && y >= 0 && x < this.size && y < this.size){
-                    if((x !== i || y !== j) && this.board[x][y].bomb){
-                      count++
-                    }
-                  }
-                }
-              }
-              cell.value = count;
-            }
-          }
-        }
-      },
-      showCell: function(x,y){
+
+      showCell(x,y){
         var cell = this.board[x][y];
         if(cell.hidden){
-          this.uncoverCell(x,y);
+          cell.hidden = false;
           if(cell.value === 0){
-            for(var i=x-1; i<=x+1; i++){
-              for(var j=y-1; j<=y+1; j++){
-                if(i >=0 && j >= 0 && i < this.size && j < this.size){
-                    this.showCell(i,j);
-                }
-              }
-            }
+            this.getNeighbours(x,y).forEach(nbr => this.showCell(nbr.x,nbr.y));
           }
         }
       },
-      uncoverCell: function(x,y){
+
+      uncoverCell(x,y){
         var cell = this.board[x][y];
         cell.hidden = false;
       },
-      processClick: function(x,y){
+
+      processClick(x,y){
         if(!this.started){
           //FIRST CLICK
           this.started = true;
           this.safeZone = {x: x, y: y};
           this.putBombs();
-          this.calculateNumbers();
+          //this.calculateNumbers();
         };
         if(this.finished || this.board[x][y].flagged){
           return;
@@ -120,24 +118,27 @@ define('js/gameboard', ['js/tile'], function(tile){
         if(this.board[x][y].bomb){
           //DETONATE
           this.board[x][y].detonated = true;
-          this.bombs.forEach((cell)=>{
-            this.uncoverCell(cell.x,cell.y);
+          this.board.forEach(row => {
+            row.forEach(cell =>{
+              if(cell.bomb) cell.hidden = false;
+            });
           });
           this.finished = true;
         }
         this.showCell(x,y);
       },
-      processRightClick: function(x,y){
-        //e.preventDefault();
+
+      processRightClick(x,y){
         var cell = this.board[x][y];
         if(cell.hidden && !this.finished){
           cell.flagged = cell.flagged ? false : true;
         }
       }
     },
+
     template:`
       <div>
-        <div @click="restartGame">RESTART</div>
+        <div @click="startNewGame" class="restart">RESTART</div>
         <div class="row" v-for="row in board">
           <tile v-for="cell in row" :key="cell.x + cell.y" :cell="cell" 
             @show="processClick(cell.x,cell.y);" 

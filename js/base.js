@@ -1,5 +1,4 @@
 
-
 require(['js/gameboard'], function(gameboard){
   new Vue({
     el: '#board',
